@@ -1,0 +1,27 @@
+<!-- chat/templates/chat/private_index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Private Chat</title>
+</head>
+<body>
+    Who would you like to chat with? <br>
+    <input id="username-input" type="text" size="100" placeholder="Enter username"><br>
+    <input id="username-submit" type="button" value="Start Private Chat">
+
+    <script>
+        document.querySelector('#username-input').focus();
+        document.querySelector('#username-input').onkeyup = function(e) {
+            if (e.key === 'Enter') {
+                document.querySelector('#username-submit').click();
+            }
+        };
+
+        document.querySelector('#username-submit').onclick = function(e) {
+            const username = document.querySelector('#username-input').value;
+            window.location.pathname = '/private_chat/' + username + '/';
+        };
+    </script>
+</body>
+</html>
