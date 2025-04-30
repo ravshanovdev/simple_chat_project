@@ -1,6 +1,5 @@
 from django.shortcuts import render
-
-# Create your views here.
+from django.http import HttpResponse
 
 
 def index_view(request):
@@ -12,8 +11,12 @@ def room(request, room_name):
 
 
 def private_index(request):
+    if not request.user.is_authenticated:
+        return HttpResponse("royxatdan otish kerak.!")
     return render(request, 'private_index.html')
 
 
 def private_chat(request, username):
+    if not request.user.is_authenticated:
+        return HttpResponse("royxatdan otish kerak.!")
     return render(request, 'private_chat.html', {'username': username})
