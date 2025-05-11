@@ -37,10 +37,6 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
         self.user = self.scope['user']
         self.other_username = self.scope['url_route']['kwargs']['username']
 
-        if not self.user.is_authenticated:
-            await self.close()
-            return
-
         if not self.user.is_authenticated or not await self.is_valid_pair(self.user, self.other_username):
             await self.close()
             return
