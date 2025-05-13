@@ -6,32 +6,52 @@
     <title>Private Chat</title>
 </head>
 <body>
-    <h2>Private Chat with {{ username }}</h2>
-    <textarea id="chat-log" cols="100" rows="20" readonly></textarea><br>
-    <input id="chat-message-input" type="text" size="100"><br>
-    <input id="chat-message-submit" type="button" value="Send">
-    {{ username|json_script:"username" }}
-    <script>
-        const username = JSON.parse(document.getElementById('username').textContent);
+    <h2>Private chat with {{ username }}</h2>
 
+    <textarea id="chat-log" cols="100" rows="20" readonly></textarea><br>
+    <input id="chat-message-input" type="text" size="100" placeholder="Type your message"><br>
+    <input id="chat-message-submit" type="button" value="Send Text"><br>
+
+    <!-- Audio file tanlash -->
+    <input type="file" id="audio-input" accept="audio/*"><label for="audio-input">Send Audio</label><br>
+
+    <!-- Sticker (image/emoji) tanlash -->
+    <input type="file" id="sticker-input" accept="image/*"><label for="sticker-input">Send Sticker</label><br>
+
+    {{ username|json_script:"chat-username" }}
+
+    <script>
+        const username = JSON.parse(document.getElementById('chat-username').textContent);
         const chatSocket = new WebSocket(
-            'ws://'
-            + window.location.host
-            + '/ws/private/'
-            + username
-            + '/'
+            'ws://' + window.location.host + '/ws/private_chat/' + username + '/'
         );
 
         chatSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-            const message = data.sender + ': ' + data.message;
-            document.querySelector('#chat-log').value += message + '\n';
+            const chatLog = document.querySelector('#chat-log');
+
+            if (data.type === 'audio') {
+                chatLog.value += `[Audio from ${data.sender}]\n`;
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = data.message;
+                chatLog.parentElement.appendChild(audio);
+            } else if (data.type === 'sticker') {
+                chatLog.value += `[Sticker from ${data.sender}]\n`;
+                const img = document.createElement('img');
+                img.src = data.message;
+                img.style.maxWidth = '150px';
+                chatLog.parentElement.appendChild(img);
+            } else {
+                chatLog.value += (data.sender + ": " + data.message + '\n');
+            }
         };
 
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
         };
 
+        // Text message sending
         document.querySelector('#chat-message-input').focus();
         document.querySelector('#chat-message-input').onkeyup = function(e) {
             if (e.key === 'Enter') {
@@ -40,13 +60,46 @@
         };
 
         document.querySelector('#chat-message-submit').onclick = function(e) {
-            const input = document.querySelector('#chat-message-input');
-            const message = input.value;
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
             chatSocket.send(JSON.stringify({
-                'message': message
+                'message': message,
+                'type': 'text'
             }));
-            input.value = '';
+            messageInputDom.value = '';
         };
+
+        // Audio sending
+        document.querySelector('#audio-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    chatSocket.send(JSON.stringify({
+                        'message': reader.result,
+                        'type': 'audio',
+                        'filename': file.name
+                    }));
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Sticker sending
+        document.querySelector('#sticker-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    chatSocket.send(JSON.stringify({
+                        'message': reader.result,
+                        'type': 'sticker',
+                        'filename': file.name
+                    }));
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     </script>
 </body>
 </html>

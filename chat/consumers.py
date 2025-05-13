@@ -18,18 +18,29 @@ class GroupChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json["message"]
+        message_type = text_data_json.get("type", 'text')  # default text
+
+        content = text_data_json.get('message', '')
+        sticker_url = text_data_json.get('sticker', None)
+
+        event_data = {
+            'type': 'chat.message',
+            'message_type': message_type,
+            'message': content,
+            'sticker_url': sticker_url
+        }
 
         # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name, {"type": "chat.message", "message": message}
-        )
+        await self.channel_layer.group_send(self.room_group_name, event_data)
 
     async def chat_message(self, event):
-        message = event["message"]
 
         # Send message to WebSocket
-        await self.send(text_data=json.dumps({"message": message}))
+        await self.send(text_data=json.dumps({
+            'message_type': event['message_type'],
+            "message": event['message'],
+            'sticker_url': event.get('sticker_url', '')
+        }))
 
 
 class PrivateChatConsumer(AsyncWebsocketConsumer):
@@ -55,22 +66,26 @@ class PrivateChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
 
-        message = data['message']
+        message_type = data.get('type', 'text')  # default text
+        content = data.get('message', '')
+        sticker_url = data.get('sticker', None)
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat.message',
-                'message': message,
-                'sender': self.user.username
+        event_data = {
+            'type': 'chat.message',
+            'message_type': message_type,
+            'message': content,
+            'sticker_url': sticker_url,
+            'sender': self.user.username
+        }
 
-            }
-        )
+        await self.channel_layer.group_send(self.room_group_name, event_data)
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
+            'type': event['message_type'],
             "message": event['message'],
-            'sender': event['sender']
+            'sender': event['sender'],
+            'sticker_url': event.get('sticker_url', '')
         }))
 
     @staticmethod

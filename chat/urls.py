@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import index_view, room, private_index, private_chat
+from .views import index_view, room, private_index, private_chat, UploadAudioAPIView
 
 
 urlpatterns = [
@@ -8,6 +8,7 @@ urlpatterns = [
 
     path("private_chat/", private_index, name="private_index"),
     path("private_chat/<str:username>/", private_chat, name="private_chat"),
+    path('upload/audio/', UploadAudioAPIView.as_view()),
 
 
 ]
