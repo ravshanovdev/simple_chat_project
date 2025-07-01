@@ -16,6 +16,7 @@ class Message(models.Model):
     ]
 
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    sender2 = models.CharField(max_length=150)
     room_name = models.CharField(max_length=255)  # group or private room
     content = models.TextField(blank=True, null=True)
     audio_file = models.FileField(upload_to='chat_audios/', blank=True, null=True)

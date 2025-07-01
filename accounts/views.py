@@ -1,32 +1,62 @@
-from django.shortcuts import render
-from .serializers import UserSerializer
+import random
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.cache import cache
+
+User = get_user_model()
 
 
 class UserRegistrationApiView(APIView):
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        user_email = request.data.get('email')
 
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not user_email:
+            return Response({"error": "Email kiriting!"}, status=400)
 
-
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        token['username'] = user.username
-        token['email'] = user.email
-
-        return token
+        # Har bir so‘rov uchun yangi kod yaratish
+        verification_code = random.randint(100000, 999999)
 
 
-class CustomTokenObtainPairAPIView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
-    
+        # saqlash
+        cache.set(user_email, verification_code, timeout=300)
+
+        # Kodni saqlash (misol: Redis, DB, yoki vaqtinchalik dict) — bu qadam yetishmayapti
+
+        send_mail(
+            subject='Tasdiqlash kodi',
+            message=f'Kod: {verification_code}',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user_email],
+            fail_silently=False
+        )
+        return Response({"message": "Kod yuborildi!"}, status=200)
+
+
+class VerifyCodeTokenAPIView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+
+        saved_code = cache.get(email)
+
+        if not saved_code or str(saved_code) != str(code):
+            return Response({"error": "Wrong Code.!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user, created = User.objects.get_or_create(email=email)
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'user_id': user.id,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh)
+        })
+
+
+

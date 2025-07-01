@@ -159,3 +159,14 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+# settings for smtp
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'        # Gmail bo'lsa
+EMAIL_PORT = 587                     # TLS uchun (465 SSL uchun)
+EMAIL_USE_TLS = True                 # TLS yoqiladi
+EMAIL_HOST_USER = 'kravshanov97@gmail.com'
+EMAIL_HOST_PASSWORD = 'fxzvemsyaiccyesh'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
