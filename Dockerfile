@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 6. Django uchun `collectstatic`, `migrate`, va WebSocket serverni ishga tushirish
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "your_project_name.asgi:application"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]

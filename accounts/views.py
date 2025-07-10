@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.cache import cache
-
+from chat.tasks import send_verification_email
 User = get_user_model()
 
 
@@ -28,13 +28,8 @@ class UserRegistrationApiView(APIView):
 
         # Kodni saqlash (misol: Redis, DB, yoki vaqtinchalik dict) — bu qadam yetishmayapti
 
-        send_mail(
-            subject='Tasdiqlash kodi',
-            message=f'Kod: {verification_code}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user_email],
-            fail_silently=False
-        )
+        send_verification_email(user_email, verification_code)
+
         return Response({"message": "Kod yuborildi!"}, status=200)
 
 

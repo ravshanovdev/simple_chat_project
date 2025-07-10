@@ -6,7 +6,6 @@ services:
     ports:
       - "6379:6379"
 
-
   chat-backend:
     build:
       context: .
@@ -20,3 +19,14 @@ services:
     depends_on:
       - redis
 
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: celery
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - .:/django_channels
+    depends_on:
+      - redis
+      - chat-backend
